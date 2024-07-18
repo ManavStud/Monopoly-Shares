@@ -1,8 +1,60 @@
 import openpyxl
+from functools import reduce
 
 # Load the workbook and select the active sheet
 workbook = openpyxl.load_workbook('Balance.xlsx')
 sheet = workbook.active
+
+# Events to log:
+# 1. Cash Withdrawal
+# 2. Cash Deposits
+# 3. Cash Transfers
+# 4. Share Transfers [x]
+
+#### ---Cash transfers--- ####
+cash_transfers = [
+    # {
+    #     'turn': 1,
+    #     'debited_from': 1,
+    #     'credited_to': 0, # 0 Implies Bank
+    #     'amount': 1000
+    # }
+]
+
+
+#### ---Share holding--- ####
+
+share_transfers = [
+    # {
+    #     'turn': 1,
+    #     'buyer': 1,
+    #     'company': 2,
+    #     'seller': 2,
+    #     'quantity': 10,
+    #     'price': 0.05
+    # }
+]
+
+# Returns shares held before number of turns, set turns = turn for all holdings
+def get_share_holding_before_turns(player, company, before_turns):
+    player_shares = filter(
+        lambda x : x['turn'] <= before_turns and x['company'] == company and (x['buyer'] == player or x['seller'] == player),
+        share_transfers
+    )
+
+    def calculate_holdings(total, transaction):
+        return total + transaction['quantity'] if transaction['buyer'] == player else total - transaction['quantity']
+
+    return reduce(calculate_holdings, player_shares, 0)
+
+def get_all_share_holding(player, players):
+    holdings = {}
+    for company in players:
+        share_company = get_share_holding_before_turns(player, int(company[-1]), turn)
+        holdings[company] = share_company
+    player_id = f'Player {player}'
+    holdings[player_id] = get_cell_value(cell_locations[player_id][f'{player_id} Shares'])
+    return holdings
 
 # Define the cell locations for each player
 cell_locations = {
@@ -182,7 +234,7 @@ def update_networth(player):
     equity_value = (s1qty * s1price) + (s2qty * s2price) + (s3qty * s3price) + (s4qty * s4price) + (s5qty * s5price)
     net_worth = equity_value + cash + property_value
     
-    q_cell = cell_locations[player]['Equity Value']
+    eq_cell = cell_locations[player]['Equity Value']
     set_cell_value(eq_cell,equity_value)
 
     
@@ -232,6 +284,14 @@ def add_cash(player):
     cash_cell = cell_locations[player]['Cash']
     current_cash = get_cell_value(cash_cell)
     set_cell_value(cash_cell, current_cash + amount)
+    cash_transfers.append(
+        {
+            'turn': turn,
+            'credited_to': int(player[-1]),
+            'debited_from': 0,
+            'amount': amount
+        }
+    )
 
 def buy_shares(player):
     seller = int(input("Enter the seller's no: "))
@@ -258,6 +318,14 @@ def buy_shares(player):
             set_cell_value(seller_shares_loc, seller_shares - quantity) 
             set_cell_value(buyer_cash, current_cash - total_buy_value)
             set_cell_value(seller_cash_loc, seller_cash + total_buy_value)
+            share_transfers.append({
+                'turn': turn,
+                'seller': seller,
+                'company': company,
+                'quantity': quantity,
+                'price': float(share_price),
+                'buyer': int(player[-1])
+            })
         else:
             print("Invalid Quantity")
         
@@ -273,6 +341,14 @@ def withdraw_cash(player):
         print("Error: Withdrawal amount exceeds cash balance.")
     else:
         set_cell_value(cash_cell, current_cash - amount)
+        cash_transfers.append(
+            {
+                'turn': turn,
+                'debited_from': int(player[-1]),
+                'credited_to': 0,
+                'amount': amount
+            }
+        )
 
 # Function to transfer cash
 def transfer_cash(player):
@@ -295,6 +371,14 @@ def transfer_cash(player):
 
     set_cell_value(cash_cell, current_cash - amount)
     set_cell_value(transfer_to_cash_cell, transfer_to_current_cash + amount)
+    cash_transfers.append(
+        {
+            'turn': turn,
+            'debited_from': int(player[-1]),
+            'credited_to': int(transfer_to_player[-1]),
+            'amount': amount
+        }
+    )
 
 # Function to buy property
 def buy_property(player):
@@ -489,11 +573,13 @@ def share_manipulation(current_player):
         else:
                     print("Invalid choice. Please try again.")
 
+turn = 0
 # Main loop to perform operations
 def main_loop():
     players = list(cell_locations.keys())
-
+    global turn
     while True:
+        turn += 1
         for player in players:
             while True:
                 print(f"\n{player}'s turn")
@@ -542,6 +628,8 @@ def main_loop():
             
                 else:
                     print("Invalid choice. Please try again.")
+            print("Share transfers", share_transfers)
+            print("Cash transfers", cash_transfers)
 
         # Print the updated game state after each full round of turns
         print_game_state()
