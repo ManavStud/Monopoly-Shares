@@ -308,6 +308,114 @@ def repay_debt(player):
     else:
         set_cell_value(debt_taken_cell, current_debt - repay_amount)
         set_cell_value(cash_cell, current_cash - repay_amount)
+        
+
+#Share Manipulation
+def calculate_amount(player, percentage):
+    equity_value = get_cell_value(cell_locations[player]['Equity Value'])
+    debt = get_cell_value(cell_locations[player]['Debt Taken'])
+    cash = get_cell_value(cell_locations[player]['Cash'])
+    property_value = get_cell_value(cell_locations[player]['Property Value'])
+    base_value = equity_value - debt - cash - property_value
+
+    if percentage == 5:
+        return 0.04 * base_value
+    elif percentage == 10:
+        return 0.07 * base_value
+    elif percentage == 15:
+        return 0.10 * base_value
+    elif percentage == 20:
+        return 0.13 * base_value
+
+def calculate_circuit_value(player, percentage):
+    equity_value = get_cell_value(cell_locations[player]['Equity Value'])
+    debt = get_cell_value(cell_locations[player]['Debt Taken'])
+    cash = get_cell_value(cell_locations[player]['Cash'])
+    property_value = get_cell_value(cell_locations[player]['Property Value'])
+    base_value = equity_value - debt - cash - property_value
+
+    if percentage == 10:
+        return 0.12 * base_value
+    elif percentage == 20:
+        return 0.06 * base_value
+
+def print_amount_calculation(player):
+    print(f"\nAmount Calculation:")
+    for percentage in [5, 10, 15, 20]:
+        amount = calculate_amount(player, percentage)
+        print(f"For {percentage}%: {amount:.2f}")
+
+def print_circuit_value(player):
+    print(f"\nCircuit Calculation:")
+    for percentage in [10, 20]:
+        value = calculate_circuit_value(player, percentage)
+        print(f"For {percentage}%: {value:.2f}")
+
+def share_manipulation(current_player):
+    cash = get_cell_value(cell_locations[current_player]['Cash'])
+    print(f"\n{current_player}'s Current Cash: {cash}")
+    
+    manipulate_player_no = int(input("Enter the player number whose share price you want to manipulate (1-5): "))
+    
+    if manipulate_player_no < 1 or manipulate_player_no > 5:
+        print("Error: Invalid player number.")
+        return
+    if manipulate_player_no == int(current_player[-1]):
+        print("Error: You cannot manipulate your own share price.")
+        return
+    
+    manipulate_player = f"Player {manipulate_player_no}"
+    
+    print_amount_calculation(manipulate_player)
+    print_circuit_value(manipulate_player)
+    
+    while True:
+        print("\n1. Manipulate Share Price")
+        print("2. Apply Circuit")
+        print("3. Do Nothing")
+        
+        choice = input("\nEnter the number of the operation you want to perform: ")
+        
+        if choice == '1':
+            percentage = int(input(f"\nBy what percentage do you want to manipulate {manipulate_player}'s share price (5, 10, 15, 20)? "))
+            
+            if percentage not in [5, 10, 15, 20]:
+                print("Error: Invalid percentage.")
+                return
+            
+            amount_required = calculate_amount(manipulate_player, percentage)
+            
+            if cash >= amount_required:
+                set_cell_value(cell_locations[current_player]['Cash'], cash - amount_required)
+                print(f"{current_player} has successfully manipulated {manipulate_player}'s share price by {percentage}%.")
+                print(f"{current_player}'s Updated Cash: {get_cell_value(cell_locations[current_player]['Cash'])}")
+            else:
+                print(f"Error: Insufficient cash ({cash}) to manipulate {manipulate_player}'s share price by {percentage}%.")
+            break
+                
+        elif choice == '2':
+            percentage = int(input(f"By what percentage do you want to apply circuit on {manipulate_player}'s share price (10, 20)? "))
+            
+            if percentage not in [10, 20]:
+                print("Error: Invalid percentage.")
+                return
+            
+            amount_required = calculate_circuit_value(manipulate_player, percentage)
+            
+            if cash >= amount_required:
+                set_cell_value(cell_locations[current_player]['Cash'], cash - amount_required)
+                print(f"{current_player} has successfully applied circuit on {manipulate_player}'s share price by {percentage}%.")
+                print(f"{current_player}'s Updated Cash: {get_cell_value(cell_locations[current_player]['Cash'])}")
+            else:
+                print(f"Error: Insufficient cash ({cash}) to apply circuit on {manipulate_player}'s share price by {percentage}%.")
+                
+            break
+                
+        elif choice == '3':
+            break
+        
+        else:
+                    print("Invalid choice. Please try again.")
 
 # Main loop to perform operations
 def main_loop():
@@ -328,6 +436,7 @@ def main_loop():
                 print("9. End turn")
                 print("10. End turn without increasing number of turns")
                 print("11. Apply Debt's interest")
+                print("12. Share Manipulation")
                 
                 choice = input("Enter the number of the operation you want to perform: ")
 
@@ -356,6 +465,8 @@ def main_loop():
                     end_turn_without_increasing_turns(player)
                 elif choice == '11':
                     apply_interest_to_debt(player)
+                elif choice == '12':
+                    share_manipulation(player)
             
                 else:
                     print("Invalid choice. Please try again.")
