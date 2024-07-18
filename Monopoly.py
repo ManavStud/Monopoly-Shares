@@ -310,7 +310,7 @@ def repay_debt(player):
         set_cell_value(cash_cell, current_cash - repay_amount)
         
 
-#Share Manipulation
+#Function to calculate amount
 def calculate_amount(player, percentage):
     equity_value = get_cell_value(cell_locations[player]['Equity Value'])
     debt = get_cell_value(cell_locations[player]['Debt Taken'])
@@ -319,13 +319,13 @@ def calculate_amount(player, percentage):
     base_value = equity_value - debt - cash - property_value
 
     if percentage == 5:
-        return 0.04 * base_value
+        return 0.04 * base_value, "4/6"
     elif percentage == 10:
-        return 0.07 * base_value
+        return 0.07 * base_value, "3/6"
     elif percentage == 15:
-        return 0.10 * base_value
+        return 0.10 * base_value, "2/6"
     elif percentage == 20:
-        return 0.13 * base_value
+        return 0.13 * base_value, "1/6"
 
 def calculate_circuit_value(player, percentage):
     equity_value = get_cell_value(cell_locations[player]['Equity Value'])
@@ -335,21 +335,21 @@ def calculate_circuit_value(player, percentage):
     base_value = equity_value - debt - cash - property_value
 
     if percentage == 10:
-        return 0.12 * base_value
+        return 0.12 * base_value, "3/6"
     elif percentage == 20:
-        return 0.06 * base_value
+        return 0.06 * base_value, "4/6"
 
 def print_amount_calculation(player):
     print(f"\nAmount Calculation:")
     for percentage in [5, 10, 15, 20]:
-        amount = calculate_amount(player, percentage)
-        print(f"For {percentage}%: {amount:.2f}")
+        amount, dice_roll = calculate_amount(player, percentage)
+        print(f"For {percentage}%: {amount:.2f} - Dice roll: {dice_roll}")
 
 def print_circuit_value(player):
     print(f"\nCircuit Calculation:")
     for percentage in [10, 20]:
-        value = calculate_circuit_value(player, percentage)
-        print(f"For {percentage}%: {value:.2f}")
+        value, dice_roll = calculate_circuit_value(player, percentage)
+        print(f"For {percentage}%: {value:.2f} - Dice roll: {dice_roll}")
 
 def share_manipulation(current_player):
     cash = get_cell_value(cell_locations[current_player]['Cash'])
@@ -383,7 +383,7 @@ def share_manipulation(current_player):
                 print("Error: Invalid percentage.")
                 return
             
-            amount_required = calculate_amount(manipulate_player, percentage)
+            amount_required, _ = calculate_amount(manipulate_player, percentage)
             
             if cash >= amount_required:
                 set_cell_value(cell_locations[current_player]['Cash'], cash - amount_required)
@@ -400,7 +400,7 @@ def share_manipulation(current_player):
                 print("Error: Invalid percentage.")
                 return
             
-            amount_required = calculate_circuit_value(manipulate_player, percentage)
+            amount_required, _ = calculate_circuit_value(manipulate_player, percentage)
             
             if cash >= amount_required:
                 set_cell_value(cell_locations[current_player]['Cash'], cash - amount_required)
