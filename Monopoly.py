@@ -6,10 +6,8 @@ workbook = openpyxl.load_workbook('Balance.xlsx')
 sheet = workbook.active
 
 # Events to log:
-# 1. Cash Withdrawal
-# 2. Cash Deposits
-# 3. Cash Transfers
-# 4. Share Transfers [x]
+# 1. Cash Transfers [x]
+# 2. Share Transfers [x]
 
 #### ---Cash transfers--- ####
 cash_transfers = [
