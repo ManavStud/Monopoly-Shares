@@ -138,11 +138,64 @@ def print_game_state():
         print("{:<25} {:<10} {:<10} {:<10} {:<10} {:<10}".format(*row))
 
 
+def update_networth(player):
+    nw_cell = cell_locations[player]['Net Worth']
+    nw = get_cell_value(nw)
+    
+    s1cell = cell_locations[player]['Player 1 Shares']
+    s1qty = get_cell_value(s1cell)
+    s1price_cell = cell_locations['Player 1']['Share Price'] 
+    s1price = get_cell_value(s1price_cell)
+    
+    s2cell = cell_locations[player]['Player 2 Shares']
+    s2qty = get_cell_value(s2cell)
+    s2price_cell = cell_locations['Player 2']['Share Price'] 
+    s2price = get_cell_value(s2price_cell)
+    
+    s3cell = cell_locations[player]['Player 3 Shares']
+    s3qty = get_cell_value(s3cell)
+    s3price_cell = cell_locations['Player 3']['Share Price'] 
+    s3price = get_cell_value(s3price_cell)
+    
+    s4cell = cell_locations[player]['Player 4 Shares']
+    s4qty = get_cell_value(s4cell)
+    s4price_cell = cell_locations['Player 4']['Share Price'] 
+    s4price = get_cell_value(s4price_cell)
+    
+    s5cell = cell_locations[player]['Player 1 Shares']
+    s5qty = get_cell_value(s5cell)
+    s5price_cell = cell_locations['Player 1']['Share Price'] 
+    s5price = get_cell_value(s5price_cell)   
+    
+    cash_cell = cell_locations[player]['Cash']
+    cash = get_cell_value(cash_cell)
+    
+    apply_interest_to_property(player)
+    property_value_cell = cell_locations[player]['Property Value']
+    property_value = get_cell_value(property_value_cell)
+    
+    
+    apply_interest_to_debt(player)
+    debt_cell = cell_locations[player]['Debt Value to be Repaid']
+    debt = get_cell_value(debt_cell)
+    
+    equity_value = (s1qty * s1price) + (s2qty * s2price) + (s3qty * s3price) + (s4qty * s4price) + (s5qty * s5price)
+    net_worth = equity_value + cash + property_value
+    
+    q_cell = cell_locations[player]['Equity Value']
+    set_cell_value(eq_cell,equity_value)
+
+    
+    
+    
+    
+    print("Net Worth Updated")
+
 def end_turn_without_increasing_turns(player):
     print(f"{player} has chosen to end their turn without increasing turns played.")
 
 def apply_interest_to_debt(player):
-    debt_taken_cell = cell_locations[player]['Debt Taken']
+    debt_taken_cell = cell_locations[player]['Debt Value to be Repaid']
     current_debt = get_cell_value(debt_taken_cell)
     interest_rate = 0.05  # Example interest rate of 5%
     
@@ -153,6 +206,25 @@ def apply_interest_to_debt(player):
         print(f"Applied interest to {player}'s debt. New debt value: {new_debt}")
     else:
         print(f"{player} has no outstanding debt to apply interest to.")
+        
+
+def apply_interest_to_property(player):
+    property_cell = cell_locations[player]['Property Value']
+    property_value = get_cell_value(debt_taken_cell)
+    interest_rate = 0.025  # Example interest rate of 5%
+    
+    if property_value > 0:
+        interest = property_value * interest_rate
+        property_value_updated = property_value + interest
+        set_cell_value(debt_taken_cell, property_value_updated)
+        print(f"Applied interest to {player}'s Property Value. New Property value: {property_value_updated}")
+    else:
+        print(f"{player} has no property value")
+
+
+
+def end_turn_without_increasing_turns(player):
+    print(f"{player} has chosen to end their turn without increasing turns played.")
 
 # Function to add cash
 def add_cash(player):
@@ -360,9 +432,9 @@ def share_manipulation(current_player):
     if manipulate_player_no < 1 or manipulate_player_no > 5:
         print("Error: Invalid player number.")
         return
-    if manipulate_player_no == int(current_player[-1]):
-        print("Error: You cannot manipulate your own share price.")
-        return
+    # if manipulate_player_no == int(current_player[-1]):
+    #     print("Error: You cannot manipulate your own share price.")
+    #     return
     
     manipulate_player = f"Player {manipulate_player_no}"
     
