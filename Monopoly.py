@@ -655,7 +655,7 @@ def main_loop():
         print(json.dumps(average_property_value, sort_keys=True, indent=2))
         print(json.dumps(average_debt, sort_keys=True, indent=2))
 
-        if turn % 2 == 0: # ! 8
+        if turn % 8 == 0:
             for player in players:
                 average_property_value[player] /= 8
                 average_debt[player] /= 8
@@ -673,7 +673,7 @@ def main_loop():
             dividend_entitled = {}
             for player in players:
                 dividend_entitled[player] = {}
-                share_holding = get_all_share_holding(int(player[-1]), players, turn) # ! - 8
+                share_holding = get_all_share_holding(int(player[-1]), players, turn - 8)
                 for company in players:
                     dividend_entitled[player][company] = share_holding[company] * dividend_payout[company]
             
