@@ -1,8 +1,9 @@
 import openpyxl
+import json
 from functools import reduce
 
 # Load the workbook and select the active sheet
-workbook = openpyxl.load_workbook('Balance.xlsx')
+workbook = openpyxl.load_workbook('Balance Test.xlsx')
 sheet = workbook.active
 
 # Events to log:
@@ -45,10 +46,10 @@ def get_share_holding_before_turns(player, company, before_turns):
 
     return reduce(calculate_holdings, player_shares, 0)
 
-def get_all_share_holding(player, players):
+def get_all_share_holding(player, players, before_turns):
     holdings = {}
     for company in players:
-        share_company = get_share_holding_before_turns(player, int(company[-1]), turn)
+        share_company = get_share_holding_before_turns(player, int(company[-1]), before_turns)
         holdings[company] = share_company
     player_id = f'Player {player}'
     holdings[player_id] = get_cell_value(cell_locations[player_id][f'{player_id} Shares'])
@@ -65,6 +66,7 @@ cell_locations = {
         'Foreign Shares': 'B9',
         'Net Worth': 'B10',
         'Turns Played': 'B11',
+        'Dividend Payout Ratio': 'B12',
         'Debt Taken': 'B14',
         'Debt Value to be Repaid': 'B15',
         'Debt Interest': 'B16',
@@ -86,6 +88,7 @@ cell_locations = {
         'Foreign Shares': 'C9',
         'Net Worth': 'C10',
         'Turns Played': 'C11',
+        'Dividend Payout Ratio': 'C12',
         'Debt Taken': 'C14',
         'Debt Value to be Repaid': 'C15',
         'Debt Interest': 'C16',
@@ -107,6 +110,7 @@ cell_locations = {
         'Foreign Shares': 'D9',
         'Net Worth': 'D10',
         'Turns Played': 'D11',
+        'Dividend Payout Ratio': 'D12',
         'Debt Taken': 'D14',
         'Debt Value to be Repaid': 'D15',
         'Debt Interest': 'D16',
@@ -128,6 +132,7 @@ cell_locations = {
         'Foreign Shares': 'E9',
         'Net Worth': 'E10',
         'Turns Played': 'E11',
+        'Dividend Payout Ratio': 'E12',
         'Debt Taken': 'E14',
         'Debt Value to be Repaid': 'E15',
         'Debt Interest': 'E16',
@@ -150,6 +155,7 @@ cell_locations = {
         'Foreign Shares': 'F9',
         'Net Worth': 'F10',
         'Turns Played': 'F11',
+        'Dividend Payout Ratio': 'F12',
         'Debt Taken': 'F14',
         'Debt Value to be Repaid': 'F15',
         'Debt Interest': 'F16',
@@ -569,12 +575,20 @@ def share_manipulation(current_player):
             break
         
         else:
-                    print("Invalid choice. Please try again.")
+            print("Invalid choice. Please try again.")
 
 turn = 0
 # Main loop to perform operations
 def main_loop():
     players = list(cell_locations.keys())
+
+    # Add value after each turn
+    # Get average value after 8 rounds
+    # Calculate dividend value for each company
+    # Decide payout for each player
+
+    average_property_value = { player: 0.0 for player in players }
+    average_debt = { player: 0.0 for player in players }
     global turn
     while True:
         turn += 1
@@ -626,11 +640,49 @@ def main_loop():
             
                 else:
                     print("Invalid choice. Please try again.")
-            print("Share transfers", share_transfers)
-            print("Cash transfers", cash_transfers)
+            print("Share transfers")
+            print(json.dumps(share_transfers, sort_keys=True, indent=2))
+            print("Cash transfers")
+            print(json.dumps(cash_transfers, sort_keys=True, indent=2))
 
         # Print the updated game state after each full round of turns
         print_game_state()
+
+        for player in players:
+            average_property_value[player] += float(get_cell_value(cell_locations[player]['Property Value']))
+            average_debt[player] += float(get_cell_value(cell_locations[player]['Debt Taken']))
+
+        print(json.dumps(average_property_value, sort_keys=True, indent=2))
+        print(json.dumps(average_debt, sort_keys=True, indent=2))
+
+        if turn % 2 == 0: # ! 8
+            for player in players:
+                average_property_value[player] /= 8
+                average_debt[player] /= 8
+            
+            # Calculate divided payout for each company
+            def formula(avg_property_value, avg_debt):
+                return max(0, 0.5 * (avg_property_value - avg_debt))
+
+            dividend_payout = {}
+            for company in players:
+                dividend_payout_ratio = float(get_cell_value(cell_locations[company]['Dividend Payout Ratio']))
+                dividend_payout[company] = dividend_payout_ratio * formula(average_property_value[company], average_debt[company])
+
+            # Calculate actual amount for each player
+            dividend_entitled = {}
+            for player in players:
+                dividend_entitled[player] = {}
+                share_holding = get_all_share_holding(int(player[-1]), players, turn) # ! - 8
+                for company in players:
+                    dividend_entitled[player][company] = share_holding[company] * dividend_payout[company]
+            
+            print("Dividend Entitled")
+            print(json.dumps(dividend_entitled, sort_keys=True, indent=2))
+
+            average_property_value = { player: 0.0 for player in players }
+            average_debt = { player: 0.0 for player in players }
+
 
 # Run the main loop
 print_game_state()
