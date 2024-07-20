@@ -35,16 +35,36 @@ share_transfers = [
 ]
 
 # Returns shares held before number of turns, set turns = turn for all holdings
+# This code works as long as transactions are within the range of turns
+# i.e. you cannot replay the function if the holding list has transactions beyond the turns you are looking for
 def get_share_holding_before_turns(player, company, before_turns):
-    player_shares = filter(
-        lambda x : x['turn'] <= before_turns and x['company'] == company and (x['buyer'] == player or x['seller'] == player),
+    buy_orders_before_ex_date = filter(
+        lambda x : x['turn'] <= before_turns and x['company'] == company and x['buyer'] == player,
+        share_transfers
+    )
+    buy_orders_after_ex_date = filter(
+        lambda x : x['turn'] > before_turns and x['company'] == company and x['buyer'] == player,
+        share_transfers
+    )
+    sell_orders_before_ex_date = filter(
+        lambda x : x['turn'] <= before_turns and x['company'] == company and x['seller'] == player,
+        share_transfers
+    )
+    sell_orders_after_ex_date = filter(
+        lambda x : x['turn'] > before_turns and x['company'] == company and x['seller'] == player,
         share_transfers
     )
 
     def calculate_holdings(total, transaction):
-        return total + transaction['quantity'] if transaction['buyer'] == player else total - transaction['quantity']
+        return total + transaction['quantity']
 
-    return reduce(calculate_holdings, player_shares, 0)
+    shares_held_before_ex_date = reduce(calculate_holdings, buy_orders_before_ex_date, 0)
+    shares_held_after_ex_date = reduce(calculate_holdings, buy_orders_after_ex_date, 0)
+    shares_sold_before_ex_date = reduce(calculate_holdings, sell_orders_before_ex_date, 0)
+    shares_sold_after_ex_date = reduce(calculate_holdings, sell_orders_after_ex_date, 0)
+
+    return shares_held_before_ex_date - shares_sold_before_ex_date + min(shares_held_after_ex_date - shares_sold_after_ex_date, 0)
+
 
 def get_all_share_holding(player, players, before_turns):
     holdings = {}
@@ -447,6 +467,10 @@ def take_debt(player):
     
     set_cell_value(debt_taken_cell, current_debt + debt_amount)
     set_cell_value(cash_cell, current_cash + debt_amount)
+
+    debt_repaid_cell = cell_locations[player]['Debt Value to be Repaid']
+    repaid_debt = get_cell_value(debt_repaid_cell)
+    set_cell_value(debt_repaid_cell, current_debt + debt_amount)
 
 # Function to repay debt
 def repay_debt(player):
