@@ -1,4 +1,5 @@
 import openpyxl
+import csv
 import json
 from functools import reduce
 
@@ -33,6 +34,10 @@ share_transfers = [
     #     'price': 0.05
     # }
 ]
+
+share_log_file = open("transactions.csv", "w", newline='')
+log_file_writer = csv.writer(share_log_file)
+log_file_writer.writerow(["turn", "buyer", "company", "seller", "quantity", "price"])
 
 # Returns shares held before number of turns, set turns = turn for all holdings
 # This code works as long as transactions are within the range of turns
@@ -349,6 +354,8 @@ def buy_shares(player):
                 'price': float(share_price),
                 'buyer': int(player[-1])
             })
+            transaction = share_transfers[-1]
+            log_file_writer.writerow([transaction['turn'], transaction['buyer'], transaction['company'], transaction['seller'], transaction['quantity'], transaction['price']])
         else:
             print("Invalid Quantity")
         
