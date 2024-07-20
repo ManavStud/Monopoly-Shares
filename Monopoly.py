@@ -3,7 +3,7 @@ import json
 from functools import reduce
 
 # Load the workbook and select the active sheet
-workbook = openpyxl.load_workbook('Balance Test.xlsx')
+workbook = openpyxl.load_workbook('Balance.xlsx')
 sheet = workbook.active
 
 # Events to log:
@@ -196,7 +196,6 @@ def print_game_state():
 
 def update_networth(player):
     nw_cell = cell_locations[player]['Net Worth']
-    nw = get_cell_value(nw)
     
     s1cell = cell_locations[player]['Player 1 Shares']
     s1qty = get_cell_value(s1cell)
@@ -242,13 +241,13 @@ def update_networth(player):
     set_cell_value(eq_cell,equity_value)
 
     
-    
-    
+    set_cell_value(nw_cell,net_worth)    
     
     print("Net Worth Updated")
 
 def end_turn_without_increasing_turns(player):
     print(f"{player} has chosen to end their turn without increasing turns played.")
+    update_networth(player)
 
 def apply_interest_to_debt(player):
     debt_taken_cell = cell_locations[player]['Debt Value to be Repaid']
@@ -266,13 +265,13 @@ def apply_interest_to_debt(player):
 
 def apply_interest_to_property(player):
     property_cell = cell_locations[player]['Property Value']
-    property_value = get_cell_value(debt_taken_cell)
+    property_value = get_cell_value(property_cell)
     interest_rate = 0.025  # Example interest rate of 5%
     
     if property_value > 0:
         interest = property_value * interest_rate
         property_value_updated = property_value + interest
-        set_cell_value(debt_taken_cell, property_value_updated)
+        set_cell_value(property_cell, property_value_updated)
         print(f"Applied interest to {player}'s Property Value. New Property value: {property_value_updated}")
     else:
         print(f"{player} has no property value")
@@ -605,38 +604,54 @@ def main_loop():
                 print("8. Buy Shares")
                 print("9. End turn")
                 print("10. End turn without increasing number of turns")
-                print("11. Apply Debt's interest")
-                print("12. Share Manipulation")
+                print("11. Share Manipulation")
                 
                 choice = input("Enter the number of the operation you want to perform: ")
 
                 if choice == '1':
                     add_cash(player)
+                    update_networth(player)
                 elif choice == '2':
                     withdraw_cash(player)
+                    update_networth(player)
+
                 elif choice == '3':
                     transfer_cash(player)
+                    update_networth(player)
+
                 elif choice == '4':
                     buy_property(player)
+                    update_networth(player)
+
                 elif choice == '5':
                     sell_property(player)
+                    update_networth(player)
+
                 elif choice == '6':
                     take_debt(player)
+                    update_networth(player)
+
                 elif choice == '7':
                     repay_debt(player)
+                    update_networth(player)
+
                 elif choice == '9':
                     turns_played_cell = cell_locations[player]['Turns Played']
                     current_turns = get_cell_value(turns_played_cell)
                     set_cell_value(turns_played_cell, current_turns + 1)
+                    update_networth(player)
                     break
+
                 elif choice == '8':
                     buy_shares(player)
+                    update_networth(player)
+                    
                 elif choice == '10':
                     end_turn_without_increasing_turns(player)
+
                 elif choice == '11':
-                    apply_interest_to_debt(player)
-                elif choice == '12':
                     share_manipulation(player)
+                    update_networth(player)
             
                 else:
                     print("Invalid choice. Please try again.")
